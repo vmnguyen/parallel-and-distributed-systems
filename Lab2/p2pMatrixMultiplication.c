@@ -74,8 +74,13 @@ averow = NRA/numworkers; extra = NRA%numworkers;
     MPI_Recv(&c[offset][0],count,MPI_DOUBLE,source,mtype, 
               MPI_COMM_WORLD, &status);
   } 
-  printf("element c[0,0] is %lf.\n", c[0][0]);
-
+  for (int m = 0; m < NRA;m++){
+   	for (int n = 0;n < NCB;n++){
+     	printf(" %lf ", c[m][n]);
+   	
+   	}
+   	printf("\n");
+ }
 } /* end of master */
 
 /************ worker process *************/
