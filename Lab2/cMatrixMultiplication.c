@@ -77,7 +77,7 @@ averow = NRA/numworkers; extra = NRA%numworkers;
   //printf("element c[0,0] is %lf.\n", c[20][5]);
   for (int m = 0; m < NRA;m++){
 	for (int n = 0;n < NCB;n++){
-  	printf(" % ", c[m][n]);
+  	printf(" %lf ", c[m][n]);
 	
 	}
 	printf("\n");
