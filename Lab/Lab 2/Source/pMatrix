@@ -1,0 +1,138 @@
+/*
+ * MPI version of pipeline.
+ *
+ */
+
+#include <assert.h>
+#include <stdio.h>
+#include <errno.h>
+#include <mpi.h>
+
+/* Let's assume a picture is stored as an array of N integers */
+
+#define num_pic 10
+#define N 20
+#define tag 123
+
+
+/**************************************************************************
+ * Processor 1
+ *************************************************************************/
+
+void get_picture_from_somewhere(int* pic) 
+{
+  static int i = 0;
+  pic[0] = i++;			/* or whatever */
+}
+
+void trans1(int *src, int *dst)	/* transforms src to dst */
+{
+  printf("Stage 1: Processing picture %d\n", src[0]);
+  dst[0] = src[0];
+}
+
+void stage1 ()
+{
+  int in_pic[N], int_pic_1[N];
+  int i;
+  for (i=0; i<10; i++) {
+    get_picture_from_somewhere(in_pic);
+    trans1(in_pic, int_pic_1);
+    MPI_Send (int_pic_1, N, MPI_INT, 1, tag, MPI_COMM_WORLD);
+  }
+} 
+
+
+/**************************************************************************
+ * Processor 2
+ *************************************************************************/
+
+void trans2 (int *src, int *dst)
+{
+  printf("Stage 2: Processing picture %d\n", src[0]);
+  dst[0] = src[0];
+}
+
+void stage2 ()
+{
+  MPI_Status status;
+  int int_pic_1[N], int_pic_2[N];
+  int i;
+  for (i=0; i<num_pic; i++ ) {
+    MPI_Recv (int_pic_1, N, MPI_INT, 0, tag, MPI_COMM_WORLD, &status);
+    trans2 (int_pic_1, int_pic_2);
+    MPI_Send (int_pic_2, N, MPI_INT, 2, tag, MPI_COMM_WORLD);
+  }
+} 
+
+
+/**************************************************************************
+ * Processor 3
+ *************************************************************************/
+
+void trans3 (int *src, int *dst)
+{
+  printf("Stage 3: Processing picture %d\n", src[0]);
+  dst[0] = src[0];
+}
+
+void stage3 ()
+{
+  MPI_Status status;
+  int int_pic_2[N], int_pic_3[N];
+  int i;
+  for (i=0; i<num_pic; i++ ) {
+    MPI_Recv (int_pic_2, N, MPI_INT, 1, tag, MPI_COMM_WORLD, &status);
+    trans3 (int_pic_2, int_pic_3);
+    MPI_Send (int_pic_3, N, MPI_INT, 3, tag, MPI_COMM_WORLD);
+  }
+} 
+
+
+/**************************************************************************
+ * Processor 4
+ *************************************************************************/
+
+void trans4 (int *src, int *dst)
+{
+  printf("Stage 4: Processing picture %d\n", src[0]);
+  dst[0] = src[0];
+}
+
+
+void stage4 ()
+{
+  MPI_Status status;
+  int int_pic_3[N], out_pic[N];
+  int i;
+  for (i=0; i<num_pic; i++ ) {
+    MPI_Recv (int_pic_3, N, MPI_INT, 2, tag, MPI_COMM_WORLD, &status);
+    trans4 (int_pic_3, out_pic);
+    /* do something with out_pic */
+  }
+} 
+
+
+int main(int argc, char *argv[])
+{
+  int myrank; 
+  
+  MPI_Init (&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+  switch (myrank) {
+  case 0: stage1(); break;
+  case 1: stage2(); break;
+  case 2: stage3(); break;
+  case 3: stage4(); break;
+  }
+
+  printf ("Stage %d: done\n", myrank+1);
+  MPI_Finalize();
+  return 0;
+
+}
+
+
+
+
